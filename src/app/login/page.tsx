@@ -40,15 +40,21 @@ export default function LoginPage() {
     }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 'var(--space-10)' }}>
-          <div style={{
-            width: 48, height: 48, background: 'var(--dark-blue)',
-            borderRadius: 'var(--radius-lg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--cream)', fontSize: 'var(--text-lg)', fontWeight: 700,
-            marginBottom: 'var(--space-4)',
-          }}>AR</div>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 600, marginBottom: 'var(--space-2)', color: 'var(--dark-blue)' }}>
-            Welcome to AR Analytics
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
+          <img
+            src="/logo.png"
+            alt="BOB Data Analyzer"
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 'var(--radius-lg)',
+              objectFit: 'contain',
+              display: 'inline-block',
+              marginBottom: 'var(--space-3)',
+            }}
+          />
+          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-2)', color: 'var(--dark-blue)' }}>
+            Welcome to BOB Data Analyzer
           </h1>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>
             Sign in to start analyzing your data

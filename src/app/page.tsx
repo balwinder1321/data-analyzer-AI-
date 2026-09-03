@@ -35,13 +35,15 @@ export default function LandingPage() {
         padding: 'var(--space-4) var(--space-8)',
         maxWidth: '1200px', margin: '0 auto',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <div style={{
-            width: 32, height: 32, background: 'var(--dark-blue)',
-            borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--cream)', fontSize: 'var(--text-sm)', fontWeight: 700,
-          }}>AR</div>
-          <span style={{ fontWeight: 600, fontSize: 'var(--text-md)', color: 'var(--dark-blue)' }}>Analytics</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <img
+            src="/logo.png"
+            alt="BOB Data Analyzer"
+            style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', objectFit: 'contain' }}
+          />
+          <span style={{ fontWeight: 700, fontSize: 'var(--text-lg)', color: 'var(--dark-blue)', letterSpacing: '-0.02em' }}>
+            BOB Data Analyzer
+          </span>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
           <button className="btn btn-ghost" onClick={() => router.push('/login')}>Sign In</button>
@@ -74,7 +76,7 @@ export default function LandingPage() {
           fontSize: 'var(--text-lg)', color: 'var(--text-secondary)', lineHeight: 1.6,
           maxWidth: '600px', margin: '0 auto var(--space-8)',
         }}>
-          Connect your spreadsheets and datasets. AR Analytics automatically discovers trends, anomalies, relationships and opportunities — and explains them in plain language.
+          Connect your spreadsheets and datasets. BOB Data Analyzer automatically discovers trends, anomalies, relationships and opportunities — and explains them in plain language.
         </p>
         <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn btn-primary btn-lg" onClick={() => router.push('/login')}>
@@ -196,14 +198,14 @@ export default function LandingPage() {
         textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-          <div style={{
-            width: 20, height: 20, background: 'var(--dark-blue)',
-            borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--cream)', fontSize: '9px', fontWeight: 700,
-          }}>AR</div>
-          <span>AR Analytics</span>
+          <img
+            src="/logo.png"
+            alt="BOB Data Analyzer"
+            style={{ width: 22, height: 22, borderRadius: 'var(--radius-sm)', objectFit: 'contain' }}
+          />
+          <span style={{ fontWeight: 600 }}>BOB Data Analyzer</span>
         </div>
-        © {new Date().getFullYear()} AR Analytics. Turn raw data into decisions.
+        © {new Date().getFullYear()} BOB Data Analyzer. Turn raw data into decisions.
       </footer>
     </div>
   );

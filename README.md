@@ -1,8 +1,8 @@
-# AR Analytics — Enterprise AI Analytics Platform
+# BOB Data Analyzer — Enterprise AI Analytics Platform
 
 **Turn raw data into decisions.**
 
-AR Analytics is an AI-powered data analytics web application built with Next.js 16 (Turbopack), TypeScript, and a custom design system. It allows users to upload CSV/Excel files or connect Google Sheets, then automatically profiles, cleans, analyzes, visualizes, and explains the data with plain-language executive summaries and an interactive AI analyst.
+BOB Data Analyzer is an AI-powered data analytics web application built with Next.js 16 (Turbopack), TypeScript, and a custom design system. It allows users to upload CSV/Excel files or connect Google Sheets, then automatically profiles, cleans, analyzes, visualizes, and explains the data with plain-language executive summaries and an interactive AI analyst.
 
 ---
 

@@ -1,8 +1,9 @@
 // App-wide constants
 
-export const APP_NAME = 'AR Analytics';
+export const APP_NAME = 'BOB Data Analyzer';
+export const APP_VERSION = '1.0.0';
 export const APP_TAGLINE = 'Turn raw data into decisions.';
-export const APP_DESCRIPTION = 'Connect your spreadsheets and datasets. AR Analytics automatically discovers trends, anomalies, relationships and opportunities — and explains them in plain language.';
+export const APP_DESCRIPTION = 'Connect your spreadsheets and datasets. BOB Data Analyzer automatically discovers trends, anomalies, relationships and opportunities — and explains them in plain language.';
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const ALLOWED_FILE_TYPES = ['.csv', '.xlsx', '.xls'];

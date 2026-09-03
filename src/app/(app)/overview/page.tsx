@@ -68,7 +68,7 @@ export default function OverviewPage() {
             </svg>
           </div>
           <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--dark-blue)', marginBottom: 'var(--space-2)' }}>
-            Welcome to AR Analytics
+            Welcome to BOB Data Analyzer
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-6)', lineHeight: 1.6 }}>
             Upload your client dataset in CSV or Excel format, or import directly from Google Sheets to generate an executive intelligence dashboard.

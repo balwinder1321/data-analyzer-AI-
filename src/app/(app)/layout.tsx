@@ -81,25 +81,20 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
           }}
           onClick={() => router.push('/overview')}
         >
-          <div
+          <img
+            src="/logo.png"
+            alt="BOB Data Analyzer"
             style={{
-              width: 32,
-              height: 32,
-              background: 'var(--dark-blue)',
+              width: 34,
+              height: 34,
               borderRadius: 'var(--radius-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--cream)',
-              fontSize: '12px',
-              fontWeight: 700,
+              objectFit: 'contain',
+              display: 'block',
             }}
-          >
-            AR
-          </div>
+          />
           <div>
-            <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--dark-blue)', lineHeight: 1.2 }}>
-              AR Analytics
+            <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--dark-blue)', lineHeight: 1.2 }}>
+              BOB Data Analyzer
             </div>
             <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
               ENTERPRISE AI
@@ -518,12 +513,24 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div style={{ marginBottom: 'var(--space-6)' }}>
-                <div style={{ fontWeight: 700, fontSize: 'var(--text-lg)', color: 'var(--dark-blue)' }}>
-                  AR Analytics
-                </div>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-                  Enterprise AI Platform
+              <div style={{ marginBottom: 'var(--space-6)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                <img
+                  src="/logo.png"
+                  alt="BOB Data Analyzer"
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 'var(--radius-md)',
+                    objectFit: 'contain',
+                  }}
+                />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--text-base)', color: 'var(--dark-blue)', lineHeight: 1.2 }}>
+                    BOB Data Analyzer
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                    Enterprise AI Platform
+                  </div>
                 </div>
               </div>
 

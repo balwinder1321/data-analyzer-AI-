@@ -177,11 +177,13 @@ ${anomalies.slice(0, 3).map((a) => `- [${a.severity}] ${a.title} (Actual: ${a.ac
         <div style={{ borderBottom: '2px solid var(--dark-blue)', paddingBottom: 'var(--space-6)', marginBottom: 'var(--space-6)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-              <div style={{ width: 28, height: 28, background: 'var(--dark-blue)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '11px', fontWeight: 700 }}>
-                AR
-              </div>
+              <img
+                src="/logo.png"
+                alt="BOB Data Analyzer"
+                style={{ width: 28, height: 28, borderRadius: 4, objectFit: 'contain' }}
+              />
               <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--dark-blue)' }}>
-                AR Analytics Executive Intelligence
+                BOB Data Analyzer Executive Intelligence
               </span>
             </div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--dark-blue)', marginBottom: 'var(--space-2)', lineHeight: 1.2 }}>
@@ -337,7 +339,7 @@ ${anomalies.slice(0, 3).map((a) => `- [${a.severity}] ${a.title} (Actual: ${a.ac
               Data Completeness: <strong>{quality.completeness}%</strong> · Consistency: <strong>{quality.consistency}%</strong> · Validity: <strong>{quality.validity}%</strong>
             </div>
             <div>
-              Audited by AR Analytics Engine v1.0
+              Audited by BOB Data Analyzer Engine v1.0
             </div>
           </div>
         )}
