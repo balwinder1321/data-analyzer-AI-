@@ -16,6 +16,7 @@ const icons: Record<string, React.ReactNode> = {
   message: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
   file: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>,
   settings: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>,
+  shield: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   logout: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
   chevronDown: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>,
   plus: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
@@ -50,6 +51,15 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const isAdmin =
+    (session?.user as any)?.role === 'ADMIN' ||
+    session?.user?.email?.toLowerCase() === 'admin@bob.com';
+
+  const visibleNavItems = [
+    ...NAV_ITEMS,
+    ...(isAdmin ? [{ label: 'User Admin', href: '/admin', icon: 'shield' }] : []),
+  ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--cream)' }}>
@@ -104,7 +114,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
         {/* Nav Items */}
         <nav style={{ flex: 1, padding: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {NAV_ITEMS.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <button
@@ -185,15 +195,40 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
               style={{
                 padding: 'var(--space-3)',
                 marginTop: 'var(--space-2)',
-                fontSize: 'var(--text-xs)',
-                color: 'var(--text-tertiary)',
                 borderTop: '1px solid var(--border-subtle)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
               }}
             >
-              {session.user.name || session.user.email}
+              <div
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 600,
+                  color: 'var(--dark-blue)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {session.user.name || session.user.email}
+              </div>
+              <div style={{ marginTop: '3px' }}>
+                <span
+                  className="badge"
+                  style={{
+                    fontSize: '9px',
+                    padding: '1px 6px',
+                    background: isAdmin ? 'var(--dark-blue)' : 'var(--cream-dark)',
+                    color: isAdmin ? 'var(--cream)' : 'var(--dark-blue)',
+                    fontWeight: 700,
+                  }}
+                >
+                  {isAdmin
+                    ? 'ADMINISTRATOR'
+                    : session.user.email?.toLowerCase() === 'balwindersinghsardar1@gmail.com' ||
+                      (session.user as any)?.role === 'ANALYST'
+                    ? 'DATA ANALYST'
+                    : 'AUTHORIZED USER'}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -534,7 +569,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
 
-              {NAV_ITEMS.map((item) => (
+              {visibleNavItems.map((item) => (
                 <button
                   key={item.href}
                   onClick={() => {

@@ -5,132 +5,358 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const hasGoogleAuth = false; // Will be true when GOOGLE_CLIENT_ID is set
+  const [tab, setTab] = useState<'signin' | 'register'>('signin');
 
-  const handleDemoLogin = async () => {
+  // Sign In fields
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Register fields
+  const [regName, setRegName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regSuccess, setRegSuccess] = useState('');
+
+  const handleCredentialsLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setErrorMsg('Please enter both email and password.');
+      return;
+    }
+
     setLoading(true);
+    setErrorMsg('');
     try {
-      const result = await signIn('credentials', {
-        email: email || 'demo@aranalytics.com',
-        name: name || 'Demo User',
+      const res = await signIn('credentials', {
+        email: loginEmail.trim().toLowerCase(),
+        password: loginPassword.trim(),
         redirect: false,
       });
-      if (result?.ok) {
-        router.push('/overview');
+
+      if (res?.error) {
+        // NextAuth passes the thrown message or generic credentials error
+        if (res.error.toLowerCase().includes('awaiting approval') || res.error.toLowerCase().includes('pending')) {
+          setErrorMsg('Your account is awaiting approval by the administrator (admin@bob.com).');
+        } else if (res.error.toLowerCase().includes('revoked') || res.error.toLowerCase().includes('rejected')) {
+          setErrorMsg('Your account access has been revoked by the administrator.');
+        } else {
+          setErrorMsg('Invalid email or password. Please check your credentials.');
+        }
+      } else if (res?.ok) {
+        if (loginEmail.trim().toLowerCase() === 'admin@bob.com') {
+          router.push('/admin');
+        } else {
+          router.push('/overview');
+        }
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Unable to sign in. Please verify your connection.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl: '/overview' });
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName.trim() || !regEmail.trim() || !regPassword.trim()) {
+      setErrorMsg('All registration fields are required.');
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+    setRegSuccess('');
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: regName.trim(),
+          email: regEmail.trim(),
+          password: regPassword.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setRegSuccess(data.message);
+        setRegName('');
+        setRegEmail('');
+        setRegPassword('');
+      } else {
+        setErrorMsg(data.error || 'Failed to submit registration request.');
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Failed to process registration. Please retry.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--cream)', padding: 'var(--space-8)',
-    }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--cream)',
+        padding: 'var(--space-6)',
+      }}
+    >
+      <div style={{ width: '100%', maxWidth: '440px' }}>
+        {/* Brand Logo & Title */}
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
           <img
             src="/logo.png"
             alt="BOB Data Analyzer"
             style={{
-              width: 56,
-              height: 56,
+              width: 58,
+              height: 58,
               borderRadius: 'var(--radius-lg)',
               objectFit: 'contain',
               display: 'inline-block',
               marginBottom: 'var(--space-3)',
             }}
           />
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-2)', color: 'var(--dark-blue)' }}>
-            Welcome to BOB Data Analyzer
+          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-1)', color: 'var(--dark-blue)' }}>
+            BOB Data Analyzer
           </h1>
-          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>
-            Sign in to start analyzing your data
+          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            Authorized Enterprise Analytics & Intelligence
           </p>
         </div>
 
-        <div className="card card-elevated" style={{ padding: 'var(--space-8)' }}>
-          {/* Google Sign In */}
-          {hasGoogleAuth && (
-            <>
-              <button
-                className="btn btn-secondary"
-                onClick={handleGoogleLogin}
-                style={{ width: '100%', marginBottom: 'var(--space-4)', height: 48 }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                Continue with Google
-              </button>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
-                margin: 'var(--space-4) 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)',
-              }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
-                or
-                <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
-              </div>
-            </>
+        {/* Tab Switcher */}
+        <div
+          style={{
+            display: 'flex',
+            background: 'var(--surface-card)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-md) var(--radius-md) 0 0',
+            borderBottom: 'none',
+            overflow: 'hidden',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => { setTab('signin'); setErrorMsg(''); }}
+            style={{
+              flex: 1,
+              padding: 'var(--space-3)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: tab === 'signin' ? 700 : 500,
+              background: tab === 'signin' ? 'var(--surface-card)' : 'var(--cream)',
+              color: tab === 'signin' ? 'var(--dark-blue)' : 'var(--text-tertiary)',
+              borderBottom: tab === 'signin' ? '2px solid var(--dark-blue)' : '1px solid var(--border-default)',
+              cursor: 'pointer',
+            }}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTab('register'); setErrorMsg(''); setRegSuccess(''); }}
+            style={{
+              flex: 1,
+              padding: 'var(--space-3)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: tab === 'register' ? 700 : 500,
+              background: tab === 'register' ? 'var(--surface-card)' : 'var(--cream)',
+              color: tab === 'register' ? 'var(--dark-blue)' : 'var(--text-tertiary)',
+              borderBottom: tab === 'register' ? '2px solid var(--dark-blue)' : '1px solid var(--border-default)',
+              cursor: 'pointer',
+            }}
+          >
+            Request Access
+          </button>
+        </div>
+
+        {/* Form Card */}
+        <div className="card card-elevated" style={{ padding: 'var(--space-6)', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)' }}>
+          {errorMsg && (
+            <div
+              style={{
+                padding: 'var(--space-3)',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid var(--error)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--error)',
+                fontSize: 'var(--text-xs)',
+                marginBottom: 'var(--space-4)',
+                lineHeight: 1.5,
+              }}
+            >
+              {errorMsg}
+            </div>
           )}
 
-          {/* Demo / Email Login */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
-                Name
-              </label>
-              <input
-                className="input"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
-                Email
-              </label>
-              <input
-                className="input"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-              />
-            </div>
-            <button
-              className="btn btn-primary"
-              onClick={handleDemoLogin}
-              disabled={loading}
-              style={{ width: '100%', height: 48, marginTop: 'var(--space-2)' }}
+          {regSuccess && (
+            <div
+              style={{
+                padding: 'var(--space-3)',
+                background: 'rgba(34, 197, 94, 0.12)',
+                border: '1px solid #16a34a',
+                borderRadius: 'var(--radius-md)',
+                color: '#15803d',
+                fontSize: 'var(--text-xs)',
+                marginBottom: 'var(--space-4)',
+                lineHeight: 1.5,
+              }}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </div>
+              {regSuccess}
+            </div>
+          )}
 
-          <div style={{
-            marginTop: 'var(--space-4)', padding: 'var(--space-3)',
-            background: 'var(--cream)', borderRadius: 'var(--radius-md)',
-            fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textAlign: 'center',
-          }}>
-            Demo mode — enter any email to explore the platform with sample data.
-          </div>
+          {tab === 'signin' ? (
+            <form onSubmit={handleCredentialsLogin} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
+                  Email Address
+                </label>
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
+                  Password
+                </label>
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+                style={{ width: '100%', height: 44, marginTop: 'var(--space-2)' }}
+              >
+                {loading ? 'Authenticating...' : 'Sign In to Portal'}
+              </button>
+
+              {/* Authorized Credentials Guide */}
+              <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}>
+                  Authorized System Accounts
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', fontSize: '11px' }}>
+                  <div
+                    onClick={() => { setLoginEmail('balwindersinghsardar1@gmail.com'); setLoginPassword('123123'); }}
+                    style={{
+                      background: 'var(--cream)',
+                      padding: 'var(--space-2)',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-default)',
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, color: 'var(--dark-blue)' }}>Data Analyst Login:</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>balwindersinghsardar1@gmail.com (pass: 123123)</div>
+                  </div>
+
+                  <div
+                    onClick={() => { setLoginEmail('admin@bob.com'); setLoginPassword('admin123'); }}
+                    style={{
+                      background: 'var(--cream)',
+                      padding: 'var(--space-2)',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: 'pointer',
+                      border: '1px solid var(--border-default)',
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, color: 'var(--dark-blue)' }}>Administrator Portal:</div>
+                    <div style={{ color: 'var(--text-secondary)' }}>admin@bob.com (pass: admin123)</div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
+                  Full Name
+                </label>
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="e.g. Jane Doe"
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
+                  Email Address
+                </label>
+                <input
+                  className="input"
+                  type="email"
+                  placeholder="jane@company.com"
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
+                  Choose Password (min 6 characters)
+                </label>
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="••••••••"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  minLength={6}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+                style={{ width: '100%', height: 44, marginTop: 'var(--space-2)' }}
+              >
+                {loading ? 'Submitting Request...' : 'Submit Request for Admin Approval'}
+              </button>
+
+              <p style={{ fontSize: '11px', color: 'var(--text-tertiary)', lineHeight: 1.5, marginTop: 'var(--space-2)', textAlign: 'center' }}>
+                New accounts require verification by the system administrator (admin@bob.com) before login access is granted.
+              </p>
+            </form>
+          )}
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 'var(--space-6)', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-          By signing in, you agree to our terms of service.
+          BOB Data Analyzer &copy; {new Date().getFullYear()} &middot; Secured Access
         </p>
       </div>
     </div>

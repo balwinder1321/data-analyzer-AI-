@@ -120,8 +120,12 @@ export interface DBUser {
   id: string;
   email: string;
   name: string;
+  password?: string;
+  role: 'ADMIN' | 'ANALYST' | 'USER';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   image?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface DBDataset {
@@ -199,3 +203,52 @@ export interface DBReport {
   createdAt: string;
   updatedAt?: string;
 }
+
+export function initDefaultUsers(): void {
+  const adminEmail = 'admin@bob.com';
+  const analystEmail = 'balwindersinghsardar1@gmail.com';
+
+  const existingAdmin = db.findOne<DBUser>(COLLECTIONS.USERS, u => u.email.toLowerCase() === adminEmail);
+  if (!existingAdmin) {
+    db.create<DBUser>(COLLECTIONS.USERS, {
+      id: 'admin-bob',
+      email: adminEmail,
+      name: 'System Administrator',
+      password: 'admin123',
+      role: 'ADMIN',
+      status: 'APPROVED',
+      createdAt: new Date().toISOString(),
+    });
+  } else if (existingAdmin.password !== 'admin123' || existingAdmin.role !== 'ADMIN' || existingAdmin.status !== 'APPROVED') {
+    db.update<DBUser>(COLLECTIONS.USERS, existingAdmin.id, {
+      password: 'admin123',
+      role: 'ADMIN',
+      status: 'APPROVED',
+    });
+  }
+
+  const existingAnalyst = db.findOne<DBUser>(COLLECTIONS.USERS, u => u.email.toLowerCase() === analystEmail);
+  if (!existingAnalyst) {
+    db.create<DBUser>(COLLECTIONS.USERS, {
+      id: 'analyst-balwinder',
+      email: analystEmail,
+      name: 'Balwinder Singh',
+      password: '123123',
+      role: 'ANALYST',
+      status: 'APPROVED',
+      createdAt: new Date().toISOString(),
+    });
+  } else if (existingAnalyst.password !== '123123' || existingAnalyst.role !== 'ANALYST' || existingAnalyst.status !== 'APPROVED') {
+    db.update<DBUser>(COLLECTIONS.USERS, existingAnalyst.id, {
+      password: '123123',
+      role: 'ANALYST',
+      status: 'APPROVED',
+    });
+  }
+}
+
+// Automatically seed default accounts
+try {
+  initDefaultUsers();
+} catch {}
+
