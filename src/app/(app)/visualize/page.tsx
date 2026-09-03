@@ -216,7 +216,9 @@ export default function VisualizePage() {
                     <XAxis dataKey="x" tick={{ fontSize: 11, fill: '#6B7280' }} interval={0} angle={-25} textAnchor="end" height={60} />
                     <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} width={65} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)} />
                     <Tooltip
-                      contentStyle={{ background: 'var(--dark-blue)', borderRadius: 6, color: 'var(--cream)', fontSize: 12, border: 'none' }}
+                      contentStyle={{ background: '#0B1F33', borderRadius: 8, color: '#ffffff', fontSize: 12, border: '1px solid rgba(255, 255, 255, 0.15)', padding: '8px 12px' }}
+                      labelStyle={{ color: '#ffffff', fontWeight: 600, marginBottom: 4 }}
+                      itemStyle={{ color: '#ffffff' }}
                       formatter={(val: any) => [Number(val).toLocaleString(), `${aggregation.toUpperCase()} of ${yAxisCol}`]}
                     />
                     <Bar dataKey="y" radius={[4, 4, 0, 0]}>
@@ -230,7 +232,11 @@ export default function VisualizePage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
                     <XAxis dataKey="x" tick={{ fontSize: 11, fill: '#6B7280' }} interval="preserveStartEnd" angle={-25} textAnchor="end" height={60} />
                     <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} width={65} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)} />
-                    <Tooltip contentStyle={{ background: 'var(--dark-blue)', borderRadius: 6, color: 'var(--cream)', fontSize: 12, border: 'none' }} />
+                    <Tooltip
+                      contentStyle={{ background: '#0B1F33', borderRadius: 8, color: '#ffffff', fontSize: 12, border: '1px solid rgba(255, 255, 255, 0.15)', padding: '8px 12px' }}
+                      labelStyle={{ color: '#ffffff', fontWeight: 600, marginBottom: 4 }}
+                      itemStyle={{ color: '#ffffff' }}
+                    />
                     <Line type="monotone" dataKey="y" stroke="var(--dark-blue)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--dark-blue)' }} />
                   </LineChart>
                 ) : (
@@ -244,7 +250,11 @@ export default function VisualizePage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
                     <XAxis dataKey="x" tick={{ fontSize: 11, fill: '#6B7280' }} interval="preserveStartEnd" angle={-25} textAnchor="end" height={60} />
                     <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} width={65} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)} />
-                    <Tooltip contentStyle={{ background: 'var(--dark-blue)', borderRadius: 6, color: 'var(--cream)', fontSize: 12, border: 'none' }} />
+                    <Tooltip
+                      contentStyle={{ background: '#0B1F33', borderRadius: 8, color: '#ffffff', fontSize: 12, border: '1px solid rgba(255, 255, 255, 0.15)', padding: '8px 12px' }}
+                      labelStyle={{ color: '#ffffff', fontWeight: 600, marginBottom: 4 }}
+                      itemStyle={{ color: '#ffffff' }}
+                    />
                     <Area type="monotone" dataKey="y" stroke="var(--dark-blue)" strokeWidth={2} fillOpacity={1} fill="url(#area-grad)" />
                   </AreaChart>
                 )}
@@ -280,7 +290,11 @@ export default function VisualizePage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
                     <XAxis dataKey="x" tick={{ fontSize: 10, fill: '#9EA3AB' }} interval="preserveStartEnd" tickFormatter={(v) => (typeof v === 'string' && v.includes('-') ? v.slice(5) : v)} />
                     <YAxis tick={{ fontSize: 10, fill: '#9EA3AB' }} width={55} tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)} />
-                    <Tooltip contentStyle={{ background: 'var(--dark-blue)', border: 'none', borderRadius: 6, color: 'var(--cream)', fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{ background: '#0B1F33', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: 8, color: '#ffffff', fontSize: 12, padding: '8px 12px' }}
+                      labelStyle={{ color: '#ffffff', fontWeight: 600, marginBottom: 4 }}
+                      itemStyle={{ color: '#ffffff' }}
+                    />
                     <Line type="monotone" dataKey="y" stroke="var(--dark-blue)" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>

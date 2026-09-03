@@ -235,11 +235,21 @@ export default function OverviewPage() {
                       />
                       <Tooltip
                         contentStyle={{
-                          background: 'var(--dark-blue)',
-                          border: 'none',
-                          borderRadius: 6,
-                          color: 'var(--cream)',
+                          background: '#0B1F33',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          borderRadius: 8,
+                          color: '#ffffff',
                           fontSize: 12,
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+                          padding: '8px 12px',
+                        }}
+                        labelStyle={{
+                          color: '#ffffff',
+                          fontWeight: 600,
+                          marginBottom: 4,
+                        }}
+                        itemStyle={{
+                          color: '#ffffff',
                         }}
                       />
                       <Area type="monotone" dataKey="y" stroke="var(--dark-blue)" strokeWidth={2} fillOpacity={1} fill={`url(#grad-${i})`} />

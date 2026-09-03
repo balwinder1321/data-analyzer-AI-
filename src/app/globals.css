@@ -1141,3 +1141,30 @@ p {
 .text-center { text-align: center; }
 .font-medium { font-weight: var(--weight-medium); }
 .font-semibold { font-weight: var(--weight-semibold); }
+
+/* ---- Recharts Tooltip Global Styling ---- */
+.recharts-default-tooltip {
+  background-color: var(--dark-blue) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  padding: 8px 12px !important;
+}
+
+.recharts-tooltip-label {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+  font-size: 11px !important;
+}
+
+.recharts-tooltip-item,
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value,
+.recharts-tooltip-item-separator,
+.recharts-default-tooltip * {
+  color: #ffffff !important;
+  font-size: 12px !important;
+}
+
