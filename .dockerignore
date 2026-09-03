@@ -1,0 +1,9 @@
+Dockerfile
+.dockerignore
+node_modules
+.next
+.git
+.data
+*.log
+.env*.local
+dev.db*

@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  datasets  Dataset[]
+  reports   Report[]
+  auditLogs AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Dataset {
+  id             String   @id @default(cuid())
+  name           String
+  source         String   // UPLOAD, GOOGLE_SHEET, DEMO
+  sourceMetadata String?  // JSON: filename, sheetId, sheetUrl, etc.
+  columns        String?  // JSON: column definitions
+  rowCount       Int      @default(0)
+  status         String   @default("PENDING") // PENDING, PROCESSING, READY, ERROR
+  errorMessage   String?
+  data           String?  // JSON: stored data for small datasets
+  filePath       String?  // Path for large file storage
+  userId         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysisRuns AnalysisRun[]
+  insights     Insight[]
+  anomalies    Anomaly[]
+  reports      Report[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AnalysisRun {
+  id               String    @id @default(cuid())
+  datasetId        String
+  status           String    @default("PENDING") // PENDING, PROFILING, ANALYZING, COMPLETE, ERROR
+  startedAt        DateTime  @default(now())
+  completedAt      DateTime?
+  profile          String?   // JSON: column profiles
+  quality          String?   // JSON: data quality scores
+  kpis             String?   // JSON: inferred KPIs
+  executiveSummary String?   // AI-generated summary text
+  trends           String?   // JSON: detected trends
+  correlations     String?   // JSON: correlation matrix
+  errorMessage     String?
+
+  dataset  Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  insights Insight[]
+  anomalies Anomaly[]
+
+  @@index([datasetId])
+}
+
+model Insight {
+  id                 String  @id @default(cuid())
+  datasetId          String
+  analysisRunId      String?
+  title              String
+  explanation        String
+  importance         String  // HIGH, MEDIUM, LOW
+  metric             String?
+  timeframe          String?
+  affectedDimension  String?
+  visualization      String? // JSON: chart spec
+  supportingData     String? // JSON: relevant rows/values
+  createdAt          DateTime @default(now())
+
+  dataset     Dataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  analysisRun AnalysisRun? @relation(fields: [analysisRunId], references: [id])
+
+  @@index([datasetId])
+  @@index([importance])
+}
+
+model Anomaly {
+  id                      String  @id @default(cuid())
+  datasetId               String
+  analysisRunId           String?
+  title                   String
+  metric                  String
+  expectedValue           String? // Could be range: "4200000-4700000"
+  actualValue             String
+  deviation               Float
+  severity                String  // HIGH, MEDIUM, LOW
+  confidence              String  // HIGH, MEDIUM, LOW
+  timestamp               String? // Date or row reference
+  rowIndex                Int?
+  contributingDimensions  String? // JSON
+  detectionMethod         String
+  explanation             String
+  createdAt               DateTime @default(now())
+
+  dataset     Dataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  analysisRun AnalysisRun? @relation(fields: [analysisRunId], references: [id])
+
+  @@index([datasetId])
+  @@index([severity])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  userId    String
+  datasetId String?
+  name      String
+  sections  String   // JSON: report sections config
+  shareToken String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataset Dataset? @relation(fields: [datasetId], references: [id])
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  metadata  String?  // JSON
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
