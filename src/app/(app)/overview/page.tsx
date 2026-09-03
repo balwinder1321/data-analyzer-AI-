@@ -157,15 +157,23 @@ export default function OverviewPage() {
       {kpis.length > 0 && (
         <section className="section">
           <div className="section-title">Key Performance Indicators</div>
-          <div className="grid-kpi">
+          <div
+            className="grid-kpi"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 'var(--space-4)',
+            }}
+          >
             {kpis.map((kpi, idx) => (
               <div key={idx} className="kpi-card">
-                <span className="kpi-label">{kpi.label}</span>
-                <span className="kpi-value">{kpi.formattedValue}</span>
+                <div className="kpi-label">{kpi.label}</div>
+                <div className="kpi-value">{kpi.formattedValue}</div>
                 {kpi.change !== undefined && (
-                  <span className={`kpi-change ${kpi.change >= 0 ? 'kpi-change-positive' : 'kpi-change-negative'}`}>
-                    {kpi.change >= 0 ? '↑' : '↓'} {Math.abs(kpi.change).toFixed(1)}% {kpi.changeLabel || 'growth'}
-                  </span>
+                  <div className={`kpi-change ${kpi.change >= 0 ? 'kpi-change-positive' : 'kpi-change-negative'}`}>
+                    <span>{kpi.change >= 0 ? '↑' : '↓'}</span>
+                    <span>{Math.abs(kpi.change).toFixed(1)}% {kpi.changeLabel || 'vs prev period'}</span>
+                  </div>
                 )}
               </div>
             ))}
