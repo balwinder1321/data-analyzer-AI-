@@ -30,12 +30,15 @@ export async function POST(req: NextRequest) {
     const dateCols = getDateColumns(profile);
     const dateColumn = dateCols.length > 0 ? dateCols[0].name : undefined;
 
+    const customApiKey = req.headers.get('x-gemini-key') || undefined;
+
     const result = await generateAnalysis(
       message,
       rows,
       profile,
       dateColumn,
-      history
+      history,
+      customApiKey
     );
 
     return NextResponse.json({

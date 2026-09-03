@@ -1,212 +1,171 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  LineChart, Line, BarChart, Bar, AreaChart, Area,
+  LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-
-interface AnalysisData {
-  id: string;
-  name: string;
-  source: string;
-  rowCount: number;
-  status: string;
-  analysis: {
-    executiveSummary: string;
-    completedAt?: string;
-    kpis: { label: string; value: number; formattedValue: string; change?: number; changeLabel?: string; unit?: string; column: string }[];
-    trends: { column: string; direction: string; changePercent: number; description: string; dataPoints: { x: string; y: number }[]; movingAverage?: { x: string; y: number }[] }[];
-    quality: { overall: number; completeness: number; consistency: number; validity: number; uniqueness: number };
-    correlations: { strongCorrelations: { column1: string; column2: string; coefficient: number; strength: string; direction: string }[] };
-  } | null;
-  insights: { id: string; title: string; explanation: string; importance: string; metric?: string }[];
-  anomalies: { id: string; title: string; metric: string; severity: string; deviation: number; actualValue: string; expectedValue?: string; explanation: string }[];
-}
+import { useDataset } from '@/context/DatasetContext';
 
 const RefreshIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="23 4 23 10 17 10" />
+    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+  </svg>
 );
 
 export default function OverviewPage() {
-  const [data, setData] = useState<AnalysisData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState('');
+  const { activeDataset, activeDatasetId, loading, analyzing, runAnalysis, loadDemoIfEmpty, datasets } = useDataset();
   const router = useRouter();
-
-  const loadDataset = useCallback(async () => {
-    try {
-      setLoading(true);
-      // Try to get existing datasets
-      const res = await fetch('/api/datasets');
-      const result = await res.json();
-      
-      if (result.data && result.data.length > 0) {
-        // Load the most recent dataset
-        const latest = result.data[0];
-        const detailRes = await fetch(`/api/datasets/${latest.id}`);
-        const detailResult = await detailRes.json();
-        if (detailResult.success) {
-          setData(detailResult.data);
-          // If no analysis yet, trigger it
-          if (!detailResult.data.analysis) {
-            await runAnalysis(latest.id);
-          }
-        }
-      } else {
-        // No datasets — create demo
-        await createAndAnalyzeDemo();
-      }
-    } catch (err) {
-      console.error(err);
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const createAndAnalyzeDemo = async () => {
-    try {
-      setAnalyzing(true);
-      // Create demo dataset
-      const createRes = await fetch('/api/datasets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Sales Performance — Demo Dataset',
-          source: 'DEMO',
-          data: null, // Will be generated server-side
-        }),
-      });
-      const createResult = await createRes.json();
-      
-      if (createResult.success) {
-        await runAnalysis(createResult.data.id);
-      } else {
-        // Directly analyze demo
-        await runAnalysis('demo');
-      }
-    } catch (err) {
-      console.error(err);
-      // Try demo fallback
-      await runAnalysis('demo');
-    }
-  };
-
-  const runAnalysis = async (datasetId: string) => {
-    try {
-      setAnalyzing(true);
-      const res = await fetch(`/api/datasets/${datasetId}/analyze`, { method: 'POST' });
-      const result = await res.json();
-      
-      if (result.success) {
-        // Reload dataset with analysis
-        const detailRes = await fetch(`/api/datasets/${datasetId}`);
-        const detailResult = await detailRes.json();
-        if (detailResult.success) {
-          setData(detailResult.data);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  useEffect(() => { loadDataset(); }, [loadDataset]);
 
   if (loading || analyzing) {
     return (
       <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div style={{
-          width: 48, height: 48, border: '2px solid var(--silver-lighter)',
-          borderTopColor: 'var(--dark-blue)', borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite', marginBottom: 'var(--space-6)',
-        }} />
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            border: '2px solid var(--silver-lighter)',
+            borderTopColor: 'var(--dark-blue)',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            marginBottom: 'var(--space-6)',
+          }}
+        />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', textAlign: 'center' }}>
-          {['Reading dataset…', 'Profiling columns…', 'Finding patterns…', 'Checking anomalies…', 'Building insights…', 'Preparing dashboard…'].map((step, i) => (
-            <div key={step} className={`processing-step ${analyzing ? (i <= 3 ? 'complete' : 'active') : ''}`}>
-              <div className="processing-indicator" />
-              <span>{step}</span>
-            </div>
-          ))}
+          <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--dark-blue)' }}>
+            {analyzing ? 'Computing Statistical Analytics & AI Insights...' : 'Loading Active Dataset...'}
+          </h3>
+          <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>
+            Profiling distributions, running anomaly detection algorithms, and synthesizing metrics.
+          </p>
         </div>
       </div>
     );
   }
 
-  if (error || !data) {
+  if (!activeDataset) {
     return (
-      <div className="page">
-        <div className="empty-state">
-          <svg className="empty-state-icon" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 5-6"/></svg>
-          <h3>No datasets yet</h3>
-          <p>Connect your first Google Sheet or upload a CSV to start discovering insights.</p>
-          <button className="btn btn-primary" onClick={() => router.push('/data')}>Connect Data</button>
+      <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div className="empty-state" style={{ maxWidth: 500 }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              background: 'var(--dark-blue)',
+              borderRadius: 'var(--radius-lg)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--cream)',
+              marginBottom: 'var(--space-4)',
+            }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--dark-blue)', marginBottom: 'var(--space-2)' }}>
+            Welcome to AR Analytics
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-6)', lineHeight: 1.6 }}>
+            Upload your client dataset in CSV or Excel format, or import directly from Google Sheets to generate an executive intelligence dashboard.
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <button className="btn btn-primary" onClick={() => router.push('/data')}>
+              Upload Your Dataset
+            </button>
+            <button className="btn btn-secondary" onClick={() => loadDemoIfEmpty()}>
+              Explore With Demo Data
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const analysis = data.analysis;
+  const analysis = activeDataset.analysis;
   const kpis = analysis?.kpis || [];
   const trends = analysis?.trends || [];
   const quality = analysis?.quality;
+  const anomalies = activeDataset.anomalies || [];
+  const insights = activeDataset.insights || [];
 
   return (
-    <div className="page">
-      {/* Header */}
-      <div className="page-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
+    <div className="page" style={{ maxWidth: '1280px', margin: '0 auto' }}>
+      {/* Page Header */}
+      <div
+        className="page-header"
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 'var(--space-4)',
+        }}
+      >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
-            <h1 className="page-title">{data.name}</h1>
-            {data.source === 'DEMO' && <span className="badge badge-outline">Demo Dataset</span>}
+            <h1 className="page-title">{activeDataset.name}</h1>
+            <span className="badge badge-default">{activeDataset.source}</span>
           </div>
           <p className="page-subtitle">
-            {data.rowCount.toLocaleString()} rows · {data.source === 'DEMO' ? 'Sample data' : data.source} · Last analyzed {analysis?.completedAt ? new Date(analysis.completedAt).toLocaleDateString() : 'now'}
+            {activeDataset.rowCount.toLocaleString()} rows · Last analyzed{' '}
+            {analysis?.completedAt ? new Date(analysis.completedAt).toLocaleString() : 'Just now'}
           </p>
         </div>
+
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => runAnalysis(data.id)}>
-            <RefreshIcon /> Refresh
+          <button className="btn btn-secondary btn-sm" onClick={() => runAnalysis(activeDataset.id)}>
+            <RefreshIcon /> Refresh Analysis
           </button>
-          <button className="btn btn-primary btn-sm" onClick={() => router.push('/analyst')}>
-            Ask AI
+          <button className="btn btn-primary btn-sm" onClick={() => router.push('/reports')}>
+            Generate Report
           </button>
         </div>
       </div>
 
-      {/* Executive Summary */}
+      {/* Executive Summary Card */}
       {analysis?.executiveSummary && (
         <section className="section">
-          <div className="card" style={{ borderLeft: '3px solid var(--dark-blue)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
-              <span className="section-title" style={{ margin: 0 }}>Executive Summary</span>
-              <span className="badge badge-default" style={{ fontSize: '10px' }}>AI Generated</span>
+          <div
+            className="card"
+            style={{
+              background: 'linear-gradient(135deg, var(--surface-card) 0%, rgba(184, 189, 197, 0.08) 100%)',
+              borderLeft: '4px solid var(--dark-blue)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z" />
+                <path d="M9 18h6M10 22h4" />
+              </svg>
+              <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--dark-blue)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Executive Intelligence Summary
+              </h3>
             </div>
-            <p style={{ fontSize: 'var(--text-base)', lineHeight: 1.7, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)', lineHeight: 1.7 }}>
               {analysis.executiveSummary}
             </p>
           </div>
         </section>
       )}
 
-      {/* KPIs */}
+      {/* KPI Cards Grid */}
       {kpis.length > 0 && (
         <section className="section">
-          <div className="section-title">Key Metrics</div>
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(200px, 1fr))`, gap: 'var(--space-4)' }}>
-            {kpis.map((kpi, i) => (
-              <div key={i} className="kpi-card">
-                <div className="kpi-label">{kpi.label}</div>
-                <div className="kpi-value">{kpi.unit === '₹' ? '₹' : ''}{kpi.formattedValue}</div>
+          <div className="section-title">Key Performance Indicators</div>
+          <div className="grid-kpi">
+            {kpis.map((kpi, idx) => (
+              <div key={idx} className="kpi-card">
+                <span className="kpi-label">{kpi.label}</span>
+                <span className="kpi-value">{kpi.formattedValue}</span>
                 {kpi.change !== undefined && (
-                  <div className={`kpi-change ${kpi.change >= 0 ? 'kpi-change-positive' : 'kpi-change-negative'}`}>
-                    {kpi.change >= 0 ? '↑' : '↓'} {Math.abs(kpi.change).toFixed(1)}% {kpi.changeLabel || ''}
-                  </div>
+                  <span className={`kpi-change ${kpi.change >= 0 ? 'kpi-change-positive' : 'kpi-change-negative'}`}>
+                    {kpi.change >= 0 ? '↑' : '↓'} {Math.abs(kpi.change).toFixed(1)}% {kpi.changeLabel || 'growth'}
+                  </span>
                 )}
               </div>
             ))}
@@ -214,44 +173,68 @@ export default function OverviewPage() {
         </section>
       )}
 
-      {/* Trend Charts */}
+      {/* Main Trends and Charts */}
       {trends.length > 0 && (
         <section className="section">
-          <div className="section-title">Trends</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--space-4)' }}>
-            {trends.slice(0, 4).map((trend, i) => (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+            <div className="section-title" style={{ marginBottom: 0 }}>Trend Velocity</div>
+            <button className="btn btn-ghost btn-sm" onClick={() => router.push('/visualize')}>
+              Explore All Visualizations →
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: 'var(--space-4)' }}>
+            {trends.slice(0, 2).map((trend, i) => (
               <div key={i} className="card">
-                <div className="chart-title">{trend.column}</div>
-                <div className="chart-subtitle">
-                  {trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→'} {Math.abs(trend.changePercent).toFixed(1)}% {trend.direction === 'up' ? 'increase' : trend.direction === 'down' ? 'decrease' : 'stable'}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                  <div>
+                    <h4 style={{ fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--dark-blue)' }}>
+                      {trend.column} Progression
+                    </h4>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{trend.description}</p>
+                  </div>
+                  <span
+                    className="badge"
+                    style={{
+                      background: trend.direction === 'up' ? 'rgba(34, 197, 94, 0.15)' : trend.direction === 'down' ? 'rgba(239, 68, 68, 0.15)' : 'var(--cream)',
+                      color: trend.direction === 'up' ? '#16a34a' : trend.direction === 'down' ? 'var(--error)' : 'var(--dark-blue)',
+                    }}
+                  >
+                    {trend.direction === 'up' ? '↑ Increasing' : trend.direction === 'down' ? '↓ Decreasing' : '→ Stable'}
+                  </span>
                 </div>
-                <div style={{ width: '100%', height: 200 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trend.dataPoints.filter((_, idx) => idx % Math.max(1, Math.floor(trend.dataPoints.length / 60)) === 0)}>
+
+                <div style={{ width: '100%', height: 260 }}>
+                  <ResponsiveContainer>
+                    <AreaChart data={trend.dataPoints.filter((_, idx) => idx % Math.max(1, Math.floor(trend.dataPoints.length / 45)) === 0)}>
                       <defs>
-                        <linearGradient id={`area-${i}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#0B1F33" stopOpacity={0.1} />
-                          <stop offset="100%" stopColor="#0B1F33" stopOpacity={0} />
+                        <linearGradient id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--dark-blue)" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="var(--dark-blue)" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--silver-lighter)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" />
                       <XAxis
                         dataKey="x"
-                        tick={{ fontSize: 10, fill: 'var(--silver-dark)' }}
-                        tickFormatter={(v: string) => {
-                          if (typeof v === 'string' && v.includes('-')) return v.split('-').slice(1).join('/');
-                          return String(v);
-                        }}
+                        tick={{ fontSize: 10, fill: '#9EA3AB' }}
                         interval="preserveStartEnd"
+                        tickFormatter={(v: string) => (typeof v === 'string' && v.includes('-') ? v.slice(5) : v)}
                       />
-                      <YAxis tick={{ fontSize: 10, fill: 'var(--silver-dark)' }} width={60} tickFormatter={(v: number) => v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(v)} />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: '#9EA3AB' }}
+                        width={60}
+                        tickFormatter={(v: number) => (v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(Math.round(v)))}
+                      />
                       <Tooltip
                         contentStyle={{
-                          background: 'var(--dark-blue)', border: 'none', borderRadius: 6,
-                          color: 'var(--cream)', fontSize: 12, padding: '8px 12px',
+                          background: 'var(--dark-blue)',
+                          border: 'none',
+                          borderRadius: 6,
+                          color: 'var(--cream)',
+                          fontSize: 12,
                         }}
                       />
-                      <Area type="monotone" dataKey="y" stroke="#0B1F33" strokeWidth={1.5} fill={`url(#area-${i})`} dot={false} />
+                      <Area type="monotone" dataKey="y" stroke="var(--dark-blue)" strokeWidth={2} fillOpacity={1} fill={`url(#grad-${i})`} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -261,83 +244,84 @@ export default function OverviewPage() {
         </section>
       )}
 
-      {/* Bottom Grid: Anomalies + Insights + Quality */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 'var(--space-4)' }}>
-        {/* Anomalies Summary */}
-        {data.anomalies.length > 0 && (
-          <section>
-            <div className="section-title">Top Anomalies</div>
+      {/* Side-by-side Highlights: High Severity Anomalies & Top Insights */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-8)' }}>
+        {/* Top Anomalies */}
+        <section className="section" style={{ marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
+            <div className="section-title" style={{ marginBottom: 0 }}>
+              Statistical Anomalies ({anomalies.length})
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => router.push('/anomalies')}>
+              View All →
+            </button>
+          </div>
+
+          {anomalies.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>No statistical outliers detected.</p>
+            </div>
+          ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-              {data.anomalies.slice(0, 3).map(anomaly => (
-                <div key={anomaly.id} className="card card-compact" style={{ cursor: 'pointer' }} onClick={() => router.push('/anomalies')}>
+              {anomalies.slice(0, 3).map((anomaly) => (
+                <div key={anomaly.id} className="card card-compact">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
                     <span className={`insight-importance insight-importance-${anomaly.severity.toLowerCase()}`} />
-                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{anomaly.title}</span>
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--dark-blue)' }}>
+                      {anomaly.title}
+                    </span>
+                    <span className="badge badge-default" style={{ marginLeft: 'auto', fontSize: '10px' }}>
+                      {anomaly.severity}
+                    </span>
                   </div>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
-                    Expected: {anomaly.expectedValue} · Actual: {anomaly.actualValue}
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {anomaly.explanation}
                   </p>
+                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 'var(--space-2)' }}>
+                    Actual: <strong>{anomaly.actualValue}</strong> · Expected: <strong>{anomaly.expectedValue || 'N/A'}</strong> ({anomaly.deviation.toFixed(1)}% deviation)
+                  </div>
                 </div>
               ))}
-              {data.anomalies.length > 3 && (
-                <button className="btn btn-ghost btn-sm" onClick={() => router.push('/anomalies')}>
-                  View all {data.anomalies.length} anomalies →
-                </button>
-              )}
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
-        {/* Insights Summary */}
-        {data.insights.length > 0 && (
-          <section>
-            <div className="section-title">AI Insights</div>
+        {/* Top AI Insights */}
+        <section className="section" style={{ marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
+            <div className="section-title" style={{ marginBottom: 0 }}>
+              Actionable AI Insights ({insights.length})
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => router.push('/insights')}>
+              View All →
+            </button>
+          </div>
+
+          {insights.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-tertiary)' }}>No insights generated yet.</p>
+            </div>
+          ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-              {data.insights.slice(0, 3).map(insight => (
-                <div key={insight.id} className="card card-compact" style={{ cursor: 'pointer' }} onClick={() => router.push('/insights')}>
+              {insights.slice(0, 3).map((insight) => (
+                <div key={insight.id} className="card card-compact">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
                     <span className={`insight-importance insight-importance-${insight.importance.toLowerCase()}`} />
-                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{insight.title}</span>
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--dark-blue)' }}>
+                      {insight.title}
+                    </span>
+                    <span className="badge badge-outline" style={{ marginLeft: 'auto', fontSize: '10px' }}>
+                      {insight.importance}
+                    </span>
                   </div>
-                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
-                    {insight.explanation.substring(0, 120)}...
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {insight.explanation}
                   </p>
                 </div>
               ))}
-              <button className="btn btn-ghost btn-sm" onClick={() => router.push('/insights')}>
-                View all insights →
-              </button>
             </div>
-          </section>
-        )}
-
-        {/* Data Quality */}
-        {quality && (
-          <section>
-            <div className="section-title">Data Health</div>
-            <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)' }}>
-              <div className="quality-meter">{quality.overall}</div>
-              <div style={{ flex: 1 }}>
-                {[
-                  { label: 'Completeness', value: quality.completeness },
-                  { label: 'Consistency', value: quality.consistency },
-                  { label: 'Validity', value: quality.validity },
-                  { label: 'Uniqueness', value: quality.uniqueness },
-                ].map(item => (
-                  <div key={item.label} style={{ marginBottom: 'var(--space-2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginBottom: 2 }}>
-                      <span>{item.label}</span>
-                      <span className="tabular-nums">{item.value}%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div className="progress-bar-fill" style={{ width: `${item.value}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
+          )}
+        </section>
       </div>
     </div>
   );

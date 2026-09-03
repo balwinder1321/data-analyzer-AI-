@@ -7,12 +7,10 @@ import { DataRow, DataProfile } from '@/types';
 
 let genAI: GoogleGenAI | null = null;
 
-function getClient(): GoogleGenAI | null {
-  if (!process.env.GEMINI_API_KEY) return null;
-  if (!genAI) {
-    genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  }
-  return genAI;
+function getClient(overrideKey?: string): GoogleGenAI | null {
+  const key = overrideKey || process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  return new GoogleGenAI({ apiKey: key });
 }
 
 export async function generateAnalysis(
@@ -20,9 +18,10 @@ export async function generateAnalysis(
   rows: DataRow[],
   profile: DataProfile,
   dateColumn?: string,
-  conversationHistory?: { role: 'user' | 'model'; parts: { text: string }[] }[]
+  conversationHistory?: { role: 'user' | 'model'; parts: { text: string }[] }[],
+  overrideApiKey?: string
 ): Promise<{ text: string; toolCalls: { name: string; result: unknown }[] }> {
-  const client = getClient();
+  const client = getClient(overrideApiKey);
   
   if (!client) {
     // Demo mode — return a pre-computed response
