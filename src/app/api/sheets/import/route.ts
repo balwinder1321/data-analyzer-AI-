@@ -7,7 +7,8 @@ import { db, COLLECTIONS, DBDataset } from '@/lib/db';
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email;
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
       rowCount: parsed.rowCount,
       status: 'READY',
       data: JSON.stringify(parsed.rows),
-      userId: session.user.id,
+      userId: String(userId),
     });
 
     return NextResponse.json({

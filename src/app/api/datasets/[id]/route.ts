@@ -7,7 +7,8 @@ import { db, COLLECTIONS, DBDataset, DBAnalysisRun, DBInsight, DBAnomaly } from 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email;
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -67,7 +68,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email;
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

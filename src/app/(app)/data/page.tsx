@@ -26,7 +26,19 @@ export default function DataPage() {
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const result = await res.json();
+      
+      if (res.status === 401) {
+        setImportError('Your session has expired. Please click "Sign Out" in the bottom left and sign back in.');
+        return;
+      }
+
+      let result;
+      try {
+        result = await res.json();
+      } catch {
+        result = { error: 'Server returned an invalid response. Please try again.' };
+      }
+
       if (result.success) {
         await refreshDatasets();
         await selectDataset(result.data.id);
@@ -56,7 +68,19 @@ export default function DataPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: sheetsUrl.trim(), sheetName: sheetsName.trim() }),
       });
-      const result = await res.json();
+
+      if (res.status === 401) {
+        setImportError('Your session has expired. Please click "Sign Out" in the bottom left and sign back in.');
+        return;
+      }
+
+      let result;
+      try {
+        result = await res.json();
+      } catch {
+        result = { error: 'Server returned an invalid response. Please try again.' };
+      }
+
       if (result.success) {
         setSheetsUrl('');
         setSheetsName('');

@@ -8,11 +8,15 @@ import { generateDemoDataset } from '@/lib/demo/dataset';
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email;
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const datasets = db.findMany<DBDataset>(COLLECTIONS.DATASETS, d => d.userId === session.user!.id);
+    const datasets = db.findMany<DBDataset>(
+      COLLECTIONS.DATASETS,
+      d => d.userId === userId || d.userId === session?.user?.id || d.userId === session?.user?.email
+    );
     
     // Enrich with latest analysis run info
     const enriched = datasets.map(d => {
@@ -39,7 +43,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email;
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

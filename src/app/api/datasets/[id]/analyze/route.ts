@@ -15,7 +15,8 @@ import { generateDemoDataset } from '@/lib/demo/dataset';
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const userId = session?.user?.id || session?.user?.email;
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         status: 'READY',
         data: JSON.stringify(demo.rows),
         columns: JSON.stringify(demo.rows.length > 0 ? Object.keys(demo.rows[0]) : []),
-        userId: session.user.id,
+        userId: String(userId),
       });
     }
 

@@ -90,7 +90,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.provider = account.provider;
       }
       if (user) {
-        token.userId = user.id;
+        token.userId = user.id || token.sub;
+        token.sub = user.id || token.sub;
         token.name = user.name;
         token.email = user.email;
         token.role = (user as any).role || 'USER';
@@ -99,14 +100,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token.userId) {
-        session.user.id = token.userId as string;
-      }
-      if (token.role) {
-        (session.user as any).role = token.role as string;
-      }
-      if (token.status) {
-        (session.user as any).status = token.status as string;
+      if (session?.user) {
+        session.user.id = (token.userId as string) || (token.sub as string) || '';
+        (session.user as any).role = (token.role as string) || 'USER';
+        (session.user as any).status = (token.status as string) || 'APPROVED';
       }
       return session;
     },
