@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       rowCount: rowCount || 0,
       status: 'READY',
       data: typeof data === 'string' ? data : JSON.stringify(data),
-      userId: session.user.id,
+      userId: String(userId),
     });
 
     return NextResponse.json({ success: true, data: { id: dataset.id, name: dataset.name } });
