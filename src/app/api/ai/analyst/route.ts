@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
     const dateCols = getDateColumns(profile);
     const dateColumn = dateCols.length > 0 ? dateCols[0].name : undefined;
 
-    const customApiKey = req.headers.get('x-gemini-key') || undefined;
+    const customApiKey = req.headers.get('x-openrouter-key') || req.headers.get('x-gemini-key') || undefined;
+    const customModel = req.headers.get('x-openrouter-model') || undefined;
 
     const result = await generateAnalysis(
       message,
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
       profile,
       dateColumn,
       history,
-      customApiKey
+      customApiKey,
+      customModel
     );
 
     return NextResponse.json({

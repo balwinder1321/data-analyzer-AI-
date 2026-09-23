@@ -75,14 +75,20 @@ function AnalystContent() {
     setSending(true);
 
     try {
-      const apiKey = typeof window !== 'undefined' ? localStorage.getItem('ar_gemini_api_key') : null;
+      const openrouterKey = typeof window !== 'undefined' ? localStorage.getItem('ar_openrouter_api_key') : null;
+      const openrouterModel = typeof window !== 'undefined' ? localStorage.getItem('ar_openrouter_model') : null;
+      const geminiKey = typeof window !== 'undefined' ? localStorage.getItem('ar_gemini_api_key') : null;
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (openrouterKey) headers['x-openrouter-key'] = openrouterKey;
+      if (openrouterModel) headers['x-openrouter-model'] = openrouterModel;
+      if (geminiKey) headers['x-gemini-key'] = geminiKey;
 
       const res = await fetch('/api/ai/analyst', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-gemini-key': apiKey } : {}),
-        },
+        headers,
         body: JSON.stringify({
           message: textToSend,
           datasetId: activeDatasetId,

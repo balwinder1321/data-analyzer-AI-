@@ -3,13 +3,14 @@
 import { GoogleGenAI } from '@google/genai';
 import { SYSTEM_PROMPT, DATA_CONTEXT_TEMPLATE } from './system-prompt';
 import { TOOL_DECLARATIONS, executeTool } from './tools';
+import { generateOpenRouterAnalysis, generateOpenRouterExecutiveSummary, getOpenRouterApiKey } from './openrouter';
 import { DataRow, DataProfile } from '@/types';
 
 let genAI: GoogleGenAI | null = null;
 
 function getClient(overrideKey?: string): GoogleGenAI | null {
   const key = overrideKey || process.env.GEMINI_API_KEY;
-  if (!key) return null;
+  if (!key || key.startsWith('sk-or-')) return null;
   return new GoogleGenAI({ apiKey: key });
 }
 
@@ -19,8 +20,28 @@ export async function generateAnalysis(
   profile: DataProfile,
   dateColumn?: string,
   conversationHistory?: { role: 'user' | 'model'; parts: { text: string }[] }[],
-  overrideApiKey?: string
+  overrideApiKey?: string,
+  overrideModel?: string
 ): Promise<{ text: string; toolCalls: { name: string; result: unknown }[] }> {
+  // Check if OpenRouter is provided or configured in environment
+  const isOpenRouter = overrideApiKey?.startsWith('sk-or-') || (!overrideApiKey && !!getOpenRouterApiKey());
+
+  if (isOpenRouter) {
+    try {
+      return await generateOpenRouterAnalysis(
+        prompt,
+        rows,
+        profile,
+        dateColumn,
+        conversationHistory,
+        overrideApiKey,
+        overrideModel
+      );
+    } catch (error) {
+      console.error('OpenRouter analysis error, falling back:', error);
+    }
+  }
+
   const client = getClient(overrideApiKey);
   
   if (!client) {
@@ -169,9 +190,29 @@ export async function generateExecutiveSummary(
   profile: DataProfile,
   kpis: unknown[],
   trends: unknown[],
-  anomalyCount: number
+  anomalyCount: number,
+  overrideApiKey?: string,
+  overrideModel?: string
 ): Promise<string> {
-  const client = getClient();
+  const isOpenRouter = overrideApiKey?.startsWith('sk-or-') || (!overrideApiKey && !!getOpenRouterApiKey());
+
+  if (isOpenRouter) {
+    try {
+      return await generateOpenRouterExecutiveSummary(
+        rows,
+        profile,
+        kpis,
+        trends,
+        anomalyCount,
+        overrideApiKey,
+        overrideModel
+      );
+    } catch (error) {
+      console.error('OpenRouter executive summary error, falling back:', error);
+    }
+  }
+
+  const client = getClient(overrideApiKey);
 
   if (!client) {
     // Generate a summary from computed data

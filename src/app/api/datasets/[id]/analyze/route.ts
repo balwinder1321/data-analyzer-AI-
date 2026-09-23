@@ -109,8 +109,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       db.create<DBInsight>(COLLECTIONS.INSIGHTS, insight);
     }
 
+    const customApiKey = req.headers.get('x-openrouter-key') || req.headers.get('x-gemini-key') || undefined;
+    const customModel = req.headers.get('x-openrouter-model') || undefined;
+
     // Step 8: Executive summary
-    const summary = await generateExecutiveSummary(rows, profile, kpis, trends, anomalies.length);
+    const summary = await generateExecutiveSummary(rows, profile, kpis, trends, anomalies.length, customApiKey, customModel);
     db.update<DBAnalysisRun>(COLLECTIONS.ANALYSIS_RUNS, run.id, {
       status: 'COMPLETE',
       completedAt: new Date().toISOString(),

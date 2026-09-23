@@ -168,7 +168,8 @@ export function groupBy(rows: DataRow[], column: string): Map<string, DataRow[]>
 }
 
 export function isDemoMode(): boolean {
-  return process.env.DEMO_MODE === 'true' || !process.env.GEMINI_API_KEY;
+  if (process.env.DEMO_MODE === 'true') return true;
+  return !process.env.GEMINI_API_KEY && !process.env.OPENROUTER_API_KEY;
 }
 
 export function generateId(): string {

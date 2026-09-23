@@ -8,22 +8,36 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const { datasets, refreshDatasets } = useDataset();
 
+  const [openrouterApiKey, setOpenrouterApiKey] = useState('');
+  const [openrouterModel, setOpenrouterModel] = useState('google/gemini-2.5-flash');
   const [geminiApiKey, setGeminiApiKey] = useState('');
-  const [showKey, setShowKey] = useState(false);
+  const [showOpenRouterKey, setShowOpenRouterKey] = useState(false);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [clientCompany, setClientCompany] = useState('');
   const [savedStatus, setSavedStatus] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedKey = localStorage.getItem('ar_gemini_api_key') || '';
+      const savedORKey = localStorage.getItem('ar_openrouter_api_key') || '';
+      const savedORModel = localStorage.getItem('ar_openrouter_model') || 'google/gemini-2.5-flash';
+      const savedGeminiKey = localStorage.getItem('ar_gemini_api_key') || '';
       const savedCompany = localStorage.getItem('ar_client_company') || '';
-      setGeminiApiKey(savedKey);
+      setOpenrouterApiKey(savedORKey);
+      setOpenrouterModel(savedORModel);
+      setGeminiApiKey(savedGeminiKey);
       setClientCompany(savedCompany);
     }
   }, []);
 
   const handleSaveSettings = () => {
     if (typeof window !== 'undefined') {
+      if (openrouterApiKey.trim()) {
+        localStorage.setItem('ar_openrouter_api_key', openrouterApiKey.trim());
+      } else {
+        localStorage.removeItem('ar_openrouter_api_key');
+      }
+      localStorage.setItem('ar_openrouter_model', openrouterModel);
+
       if (geminiApiKey.trim()) {
         localStorage.setItem('ar_gemini_api_key', geminiApiKey.trim());
       } else {
@@ -57,7 +71,7 @@ export default function SettingsPage() {
     <div className="page" style={{ maxWidth: '800px', margin: '0 auto' }}>
       <div className="page-header">
         <h1 className="page-title">Client & Platform Settings</h1>
-        <p className="page-subtitle">Configure AI API access, report branding, and data storage settings.</p>
+        <p className="page-subtitle">Configure AI API access, model selection, report branding, and data storage settings.</p>
       </div>
 
       {savedStatus && (
@@ -77,55 +91,100 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* AI Intelligence Key Configuration */}
+      {/* AI Intelligence Key Configuration (OpenRouter & Multi-Model) */}
       <section className="section">
-        <div className="section-title">AI Engine Configuration (Google Gemini)</div>
+        <div className="section-title">AI Engine Configuration (OpenRouter & Gemini)</div>
         <div className="card">
           <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-4)' }}>
-            Configure your own <strong>Google Gemini API key</strong> for live, conversational analysis with tool execution. If left blank, the system operates with pre-computed mathematical analytics and built-in heuristics.
+            Connect your <strong>OpenRouter API key</strong> for multi-model conversational analysis and autonomous tool execution. The server will use environment credentials by default, or you can override them here for this browser.
           </p>
 
           <div style={{ marginBottom: 'var(--space-4)' }}>
             <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
-              Gemini API Key
+              OpenRouter API Key (Recommended)
             </label>
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <input
                 className="input"
-                type={showKey ? 'text' : 'password'}
-                placeholder="AIzaSy..."
-                value={geminiApiKey}
-                onChange={(e) => setGeminiApiKey(e.target.value)}
+                type={showOpenRouterKey ? 'text' : 'password'}
+                placeholder="sk-or-v1-..."
+                value={openrouterApiKey}
+                onChange={(e) => setOpenrouterApiKey(e.target.value)}
                 style={{ flex: 1 }}
               />
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                onClick={() => setShowKey(!showKey)}
+                onClick={() => setShowOpenRouterKey(!showOpenRouterKey)}
               >
-                {showKey ? 'Hide' : 'Show'}
+                {showOpenRouterKey ? 'Hide' : 'Show'}
               </button>
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
-              Your API key is stored securely in browser storage and only transmitted for server-side Gemini function calls.
+              Used for live analysis via OpenRouter. Server will automatically fall back to server .env credentials if empty.
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+          <div style={{ marginBottom: 'var(--space-4)' }}>
+            <label style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>
+              Preferred AI Model (OpenRouter)
+            </label>
+            <select
+              className="input"
+              value={openrouterModel}
+              onChange={(e) => setOpenrouterModel(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              <option value="google/gemini-2.5-flash">Google Gemini 2.5 Flash (Recommended - Fast & Low Cost)</option>
+              <option value="deepseek/deepseek-chat">DeepSeek V3 (High Reasoning & Value)</option>
+              <option value="anthropic/claude-3.5-sonnet">Anthropic Claude 3.5 Sonnet (Deep Analytical Reasoning)</option>
+              <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini (Fast & Versatile)</option>
+              <option value="qwen/qwen3.8-27b:free">Qwen 3.8 27B (Free Tier)</option>
+            </select>
+          </div>
+
+          <details style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+            <summary style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}>
+              Alternative: Direct Google Gemini API Key
+            </summary>
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <input
+                  className="input"
+                  type={showGeminiKey ? 'text' : 'password'}
+                  placeholder="AIzaSy..."
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                >
+                  {showGeminiKey ? 'Hide' : 'Show'}
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', marginTop: 'var(--space-4)' }}>
             <button className="btn btn-primary btn-sm" onClick={handleSaveSettings}>
               Save Key & Preferences
             </button>
-            {geminiApiKey && (
+            {(openrouterApiKey || geminiApiKey) && (
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={() => {
+                  setOpenrouterApiKey('');
                   setGeminiApiKey('');
+                  localStorage.removeItem('ar_openrouter_api_key');
                   localStorage.removeItem('ar_gemini_api_key');
-                  setSavedStatus('API Key removed.');
+                  setSavedStatus('Custom API Keys cleared. Using server defaults.');
                 }}
                 style={{ color: 'var(--error)' }}
               >
-                Remove Key
+                Clear Custom Keys
               </button>
             )}
           </div>
