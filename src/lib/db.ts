@@ -5,7 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 
-const DB_DIR = path.join(process.cwd(), '.data');
+const isVercel = !!process.env.VERCEL;
+const DB_DIR = isVercel
+  ? path.join('/tmp', '.data')
+  : path.join(process.cwd(), '.data');
 
 export interface DBRecord {
   id: string;
