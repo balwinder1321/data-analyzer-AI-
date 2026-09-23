@@ -3,6 +3,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDataset } from '@/context/DatasetContext';
+import { parseCSV } from '@/lib/parsers/csv';
+import { parseXLSX } from '@/lib/parsers/xlsx';
 
 export default function DataPage() {
   const { datasets, activeDataset, activeDatasetId, selectDataset, deleteDataset, refreshDatasets, runAnalysis, analyzing } = useDataset();
@@ -18,38 +20,112 @@ export default function DataPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // Handle File Upload
+  // Handle File Upload with automatic client-side fallback for large files
   const handleUpload = async (file: File) => {
     setUploading(true);
     setImportError('');
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      
-      if (res.status === 401) {
-        setImportError('Your session has expired. Please click "Sign Out" in the bottom left and sign back in.');
+      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      if (!['.csv', '.xlsx', '.xls'].includes(ext)) {
+        setImportError('Unsupported file type. Please upload a .csv, .xlsx, or .xls file.');
+        setUploading(false);
         return;
       }
 
-      let result;
-      try {
-        result = await res.json();
-      } catch {
-        result = { error: 'Server returned an invalid response. Please try again.' };
+      let newDatasetId: string | null = null;
+      let uploadSuccess = false;
+
+      // 1. For files under 3.5MB, attempt standard server upload first
+      if (file.size <= 3.5 * 1024 * 1024) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          
+          if (res.status === 401) {
+            setImportError('Your session has expired. Please click "Sign Out" in the bottom left and sign back in.');
+            setUploading(false);
+            return;
+          }
+
+          if (res.ok) {
+            const result = await res.json();
+            if (result.success && result.data?.id) {
+              uploadSuccess = true;
+              newDatasetId = result.data.id;
+            }
+          }
+        } catch {
+          // If server upload fails (e.g. timeout), fall through to client-side parsing
+        }
       }
 
-      if (result.success) {
-        await refreshDatasets();
-        await selectDataset(result.data.id);
-        await runAnalysis(result.data.id);
-        router.push('/overview');
-      } else {
-        setImportError(result.error || 'Upload failed');
+      // 2. For files > 3.5MB (or if server upload was blocked by 413 limit), parse directly in browser
+      if (!uploadSuccess) {
+        let parsed;
+        if (ext === '.csv') {
+          const text = await file.text();
+          parsed = parseCSV(text);
+        } else {
+          const buffer = await file.arrayBuffer();
+          parsed = parseXLSX(buffer);
+        }
+
+        if (!parsed || parsed.rows.length === 0) {
+          setImportError('The selected file contains no data rows.');
+          setUploading(false);
+          return;
+        }
+
+        const name = file.name.replace(/\.[^/.]+$/, '');
+        // Keep up to 3000 rows to ensure lightweight JSON payload (well within Vercel limit)
+        const rowsToSend = parsed.rows.slice(0, 3000);
+
+        const res = await fetch('/api/datasets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            source: 'UPLOAD',
+            sourceMetadata: { filename: file.name, size: file.size, type: file.type },
+            columns: parsed.columns.map(c => c.name),
+            rowCount: parsed.rowCount,
+            data: rowsToSend,
+          }),
+        });
+
+        if (res.status === 401) {
+          setImportError('Your session has expired. Please click "Sign Out" in the bottom left and sign back in.');
+          setUploading(false);
+          return;
+        }
+
+        let result;
+        try {
+          result = await res.json();
+        } catch {
+          result = { error: 'Failed to create dataset on server.' };
+        }
+
+        if (result.success && result.data?.id) {
+          uploadSuccess = true;
+          newDatasetId = result.data.id;
+        } else {
+          setImportError(result.error || 'Failed to create dataset.');
+          setUploading(false);
+          return;
+        }
       }
-    } catch (err) {
-      console.error(err);
-      setImportError('Upload failed. Please try again.');
+
+      if (uploadSuccess && newDatasetId) {
+        await refreshDatasets();
+        await selectDataset(newDatasetId);
+        await runAnalysis(newDatasetId);
+        router.push('/overview');
+      }
+    } catch (err: any) {
+      console.error('Upload processing error:', err);
+      setImportError(err?.message || 'Failed to process file. Please ensure it is a valid CSV or Excel file.');
     } finally {
       setUploading(false);
     }

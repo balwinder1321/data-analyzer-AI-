@@ -38,6 +38,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       });
     }
 
+    // Rehydrate from request payload if serverless instance has empty /tmp
+    if (!dataset && req.headers.get('content-type')?.includes('application/json')) {
+      try {
+        const body = await req.json();
+        if (body && body.data) {
+          dataset = db.create<DBDataset>(COLLECTIONS.DATASETS, {
+            id,
+            name: body.name || 'Dataset',
+            source: body.source || 'UPLOAD',
+            rowCount: body.rowCount || (Array.isArray(body.data) ? body.data.length : 0),
+            status: 'READY',
+            data: typeof body.data === 'string' ? body.data : JSON.stringify(body.data),
+            columns: body.columns ? JSON.stringify(body.columns) : undefined,
+            userId: String(userId),
+          });
+        }
+      } catch {}
+    }
+
     if (!dataset) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
     }

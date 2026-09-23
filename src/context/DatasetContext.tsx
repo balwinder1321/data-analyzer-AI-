@@ -132,18 +132,38 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
 
-  // Fetch single dataset details
+  // Fetch single dataset details (with localStorage caching to bridge serverless lambda instances)
   const fetchDatasetDetails = useCallback(async (id: string) => {
     try {
       const res = await fetch(`/api/datasets/${id}`);
-      const result = await res.json();
-      if (result.success && result.data) {
-        setActiveDataset(result.data);
-        return result.data;
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          setActiveDataset(result.data);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(`ar_ds_${id}`, JSON.stringify(result.data));
+            } catch {}
+          }
+          return result.data;
+        }
       }
     } catch (err) {
       console.error('Failed to load dataset details:', err);
     }
+
+    // Fallback to locally cached copy if serverless instance has not seeded yet
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(`ar_ds_${id}`);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setActiveDataset(parsed);
+          return parsed;
+        }
+      } catch {}
+    }
+
     return null;
   }, []);
 
@@ -154,7 +174,30 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
 
     setAnalyzing(true);
     try {
-      const res = await fetch(`/api/datasets/${targetId}/analyze`, { method: 'POST' });
+      // Pass cached metadata and rows so if a different serverless instance receives the request, it can rehydrate
+      let rehydratePayload: any = {};
+      if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem(`ar_ds_${targetId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            rehydratePayload = {
+              name: parsed.name,
+              source: parsed.source,
+              columns: parsed.columns,
+              rowCount: parsed.rowCount,
+              data: parsed.previewRows,
+            };
+          }
+        } catch {}
+      }
+
+      const res = await fetch(`/api/datasets/${targetId}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rehydratePayload),
+      });
+
       const result = await res.json();
       if (result.success) {
         await fetchDatasetDetails(targetId);
